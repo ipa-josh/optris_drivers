@@ -128,6 +128,11 @@ int main(int argc, char **argv)
 
   _imager = new optris::PIImager(xmlConfig.c_str());
 
+  if(!_imager || !_imager->isOpen()) {
+	ROS_ERROR("could not open device");
+	return -1;
+  }
+
   unsigned char* bufferRaw = new unsigned char[_imager->getRawBufferSize()];
 
   image_transport::ImageTransport it(n);
@@ -168,14 +173,17 @@ int main(int argc, char **argv)
   _box_pub = n.advertise < std_msgs::Float32 > ("temperature_box", 1);
   _chip_pub = n.advertise < std_msgs::Float32 > ("temperature_chip", 1);
 
-  _imager->startStreaming();
+  if(!_imager->startStreaming())
+	ROS_ERROR("could not start streaming");
 
   // loop over acquire-process-release-publish steps
   // Images are published in raw temperature format (unsigned short, see onFrame callback for details)
-  ros::Rate loop_rate(_imager->getMaxFramerate());
+  ros::Rate loop_rate(std::max(_imager->getMaxFramerate(), _imager->getFramerate()));
+
   while(ros::ok())
   {
-    _imager->getFrame(bufferRaw);
+    if(_imager->getFrame(bufferRaw)!=0)
+	ROS_DEBUG("failed to get frame");
     _imager->process(bufferRaw);
     _imager->releaseFrame();
     ros::spinOnce();
