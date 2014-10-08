@@ -74,14 +74,14 @@ void onThermalFrame(unsigned short* image, unsigned int w, unsigned int h)
 
   _thermal_image.header.seq = ++_img_cnt;
   _thermal_image.header.stamp = ros::Time::now();
-  _thermal_pub->publish(_thermal_image);
+  if(_thermal_pub->getNumSubscribers()>0) _thermal_pub->publish(_thermal_image);
 
   _flag_temperature.data = _imager->getTempFlag();
   _box_temperature.data = _imager->getTempBox();
   _chip_temperature.data = _imager->getTempChip();
-  _flag_pub.publish(_flag_temperature);
-  _box_pub.publish(_box_temperature);
-  _chip_pub.publish(_chip_temperature);
+  if(_flag_pub.getNumSubscribers()>0) _flag_pub.publish(_flag_temperature);
+  if(_box_pub.getNumSubscribers()>0) _box_pub.publish(_box_temperature);
+  if(_chip_pub.getNumSubscribers()>0) _chip_pub.publish(_chip_temperature);
 }
 
 void onVisibleFrame(unsigned char* image, unsigned int w, unsigned int h)
